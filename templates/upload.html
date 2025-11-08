@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- Hero principal -->
+<section class="hero-section position-relative text-center text-white d-flex align-items-center justify-content-center" style="min-height: 100vh; overflow: hidden;">
+
+  <!-- 🎥 Vídeo de fundo -->
+  <video autoplay muted loop playsinline class="bg-video">
+    <source src="https://www.pexels.com/pt-br/download/video/25744130/" type="video/mp4">
+    Seu navegador não suporta vídeo HTML5.
+  </video>
+
+  <!-- Overlay escuro -->
+  <div class="overlay position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.65);"></div>
+
+  <!-- Conteúdo -->
+  <div class="container position-relative fade-up" style="z-index: 2;">
+    <h1 class="display-4 fw-bold mb-3 text-shadow">Transforme dados em conhecimento</h1>
+    <p class="lead mb-5 text-light text-shadow">
+      Faça upload da sua planilha Excel e visualize resultados em gráficos interativos e inspiradores.
+    </p>
+
+    {% if error %}
+      <div class="alert alert-danger shadow-sm">{{ error }}</div>
+    {% endif %}
+
+    <div class="card bg-dark border-0 shadow-lg p-5 mx-auto" style="max-width: 600px; backdrop-filter: blur(8px); background: rgba(0, 0, 0, 0.8);">
+      <form method="post" action="{% url 'alfadata:visualize' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-4">
+          <div class="file-upload-wrapper text-center">
+            <label class="custom-file-upload" id="fake-file-button">
+              📁 Escolher arquivo
+            </label>
+            {{ form.excel_file }}
+            <div class="mt-3">
+              <span id="file-chosen" class="text-muted">Nenhum arquivo selecionado</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg w-100 mt-3 shadow-lg">
+          Visualizar meus dados
+        </button>
+      </form>
+    </div>
+
+    <p class="mt-4 text-light small text-shadow">
+      💡 Dica: cada coluna numérica será transformada em uma linha de gráfico.
+    </p>
+  </div>
+</section>
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  const wrapper = document.querySelector('.file-upload-wrapper');
+  const fileInput = wrapper.querySelector('input[type="file"]');
+  const fileChosen = document.getElementById('file-chosen');
+  const fakeButton = document.getElementById('fake-file-button');
+
+  fakeButton.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', function() {
+    fileChosen.textContent = this.files.length > 0 ? this.files[0].name : 'Nenhum arquivo selecionado';
+  });
+</script>
+{% endblock %}
+{% endblock %}
