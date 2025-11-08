@@ -1,0 +1,35 @@
+# Django e cache
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+
+# Arquivos temporários
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+*.tmp
+
+# IDEs
+.vscode/
+.idea/
+.DS_Store
+
+# Ambiente virtual
+venv/
+env/
+ENV/
+.venv/
+
+# Arquivos estáticos grandes
+*.mp4
+*.mov
+*.avi
+*.zip
+*.tar
+*.gz
