@@ -3,50 +3,39 @@
 
 <section class="py-5 fade-up text-center">
   <div class="container">
-    <h1 class="fw-bold mb-4">📈 Resultados da planilha — {{ filename }}</h1>
+    <h1 class="fw-bold mb-4">📈 Visualização — {{ filename }}</h1>
 
     <!-- Gráfico principal -->
     <div class="card bg-dark border-0 shadow-lg p-4 mb-5" style="min-height: 400px;">
       <canvas id="chartCanvas" height="300"></canvas>
     </div>
 
-    <!-- Gráficos comparativos -->
-    <h3 class="fw-semibold text-light mb-4">📊 Comparativos por Curso</h3>
-    <div class="row text-center mb-5">
-      <div class="col-md-4 mb-4">
-        <div class="card bg-dark border-0 shadow p-3">
-          <h5 class="text-light mb-3">Alunos Matriculados</h5>
-          <canvas id="pieAlunos"></canvas>
-        </div>
-      </div>
-      <div class="col-md-4 mb-4">
-        <div class="card bg-dark border-0 shadow p-3">
-          <h5 class="text-light mb-3">Satisfação Média</h5>
-          <canvas id="pieSatisfacao"></canvas>
-        </div>
-      </div>
-      <div class="col-md-4 mb-4">
-        <div class="card bg-dark border-0 shadow p-3">
-          <h5 class="text-light mb-3">Empregabilidade</h5>
-          <canvas id="pieEmprego"></canvas>
-        </div>
-      </div>
+    <!-- Gráfico de barras -->
+    <div class="card bg-dark border-0 shadow-lg p-4 mb-5" style="min-height: 400px;">
+      <h4 class="text-white mb-4">Comparativo entre colunas</h4>
+      <canvas id="chartBarra" height="300"></canvas>
     </div>
 
-    <!-- Insights automáticos -->
-    <h3 class="fw-semibold text-light mb-3">💡 Insights automáticos</h3>
-    <div class="card bg-dark border-0 shadow-lg p-4 text-start mb-5">
-      <ul class="list-group list-group-flush">
+    <!-- Gráfico de pizza -->
+    <div class="card bg-dark border-0 shadow-lg p-4 mb-5" style="min-height: 400px;">
+      <h4 class="text-white mb-4">Distribuição de médias</h4>
+      <canvas id="chartPizza" height="300"></canvas>
+    </div>
+
+    <!-- Insights -->
+    <div class="card bg-light border-0 shadow-sm p-4 mb-5 text-start">
+      <h4 class="fw-bold mb-3">💡 Insights Automáticos</h4>
+      <ul class="list-unstyled lead">
         {% for item in insights %}
-        <li class="list-group-item bg-dark text-light border-secondary">{{ item }}</li>
+          <li class="mb-2">{{ item|safe }}</li>
         {% empty %}
-        <li class="list-group-item bg-dark text-muted border-secondary">Nenhum insight disponível.</li>
+          <li>Nenhum insight gerado.</li>
         {% endfor %}
       </ul>
     </div>
 
     <!-- Tabela -->
-    <h3 class="fw-semibold mb-3 text-light">📋 Dados carregados</h3>
+    <h3 class="fw-semibold mb-3">📋 Dados carregados</h3>
     <div class="table-responsive mb-4">
       {{ table_html|safe }}
     </div>
@@ -60,104 +49,90 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // === Gráfico principal (linha) ===
   let chartData = {};
   try {
     chartData = JSON.parse('{{ chart_data_json|escapejs }}');
-    console.log('✅ Dados principais recebidos:', chartData);
   } catch (e) {
-    console.error('❌ Erro ao processar JSON do gráfico principal:', e);
+    console.error('Erro ao processar JSON:', e);
   }
 
-  if (!chartData || !chartData.datasets || chartData.datasets.length === 0) {
-    const container = document.querySelector('.card');
-    container.innerHTML = `
-      <div class="text-center text-warning py-5">
-        <h4>Nenhum dado numérico disponível 📄</h4>
-        <p>Verifique se sua planilha contém colunas com valores numéricos.</p>
-      </div>`;
-    return;
-  }
+  if (!chartData.datasets || chartData.datasets.length === 0) return;
 
-  const ctx = document.getElementById('chartCanvas').getContext('2d');
+  const colors = [
+    'rgba(59,130,246,0.7)',
+    'rgba(34,197,94,0.7)',
+    'rgba(249,115,22,0.7)',
+    'rgba(236,72,153,0.7)',
+    'rgba(147,51,234,0.7)',
+    'rgba(14,165,233,0.7)'
+  ];
 
-  // Paleta de cores moderna
-  function randomColor(i) {
-    const palette = [
-      'rgba(59,130,246,0.7)',  // azul
-      'rgba(34,197,94,0.7)',   // verde
-      'rgba(249,115,22,0.7)',  // laranja
-      'rgba(236,72,153,0.7)',  // rosa
-      'rgba(147,51,234,0.7)',  // roxo
-      'rgba(14,165,233,0.7)'   // ciano
-    ];
-    return palette[i % palette.length];
-  }
+  const ctxLine = document.getElementById('chartCanvas').getContext('2d');
+  const ctxBar = document.getElementById('chartBarra').getContext('2d');
+  const ctxPie = document.getElementById('chartPizza').getContext('2d');
 
-  chartData.datasets = chartData.datasets.map((ds, i) => ({
-    ...ds,
-    borderColor: randomColor(i),
-    backgroundColor: randomColor(i),
-    tension: 0.25,
-    fill: false,
-    pointRadius: 0
-  }));
-
-  new Chart(ctx, {
+  // 🎯 Gráfico de linhas
+  new Chart(ctxLine, {
     type: 'line',
     data: chartData,
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: false,
       plugins: {
-        decimation: { enabled: true, algorithm: 'min-max', samples: 1000 },
         legend: { position: 'top', labels: { color: '#f8fafc' } },
-        title: { display: true, text: '📊 Gráfico gerado a partir do Excel', color: '#f8fafc' }
+        title: { display: true, text: 'Evolução dos valores', color: '#f8fafc' }
       },
-      interaction: { mode: 'index', intersect: false },
       scales: {
-        x: {
-          ticks: { color: '#cbd5e1' },
-          title: { display: true, text: 'Índice', color: '#cbd5e1' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        },
-        y: {
-          ticks: { color: '#cbd5e1' },
-          title: { display: true, text: 'Valor', color: '#cbd5e1' },
-          grid: { color: 'rgba(255,255,255,0.05)' }
-        }
+        x: { ticks: { color: '#cbd5e1' } },
+        y: { ticks: { color: '#cbd5e1' } }
       }
     }
   });
 
-  // === Gráficos de Pizza ===
-  const pizzaData = JSON.parse('{{ pizza_data_json|escapejs }}');
-  const cores = [
-    '#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#0ea5e9',
-    '#ec4899', '#14b8a6', '#eab308', '#6366f1', '#f97316', '#84cc16'
-  ];
+  // 🎯 Gráfico de barras (últimos valores)
+  const barras = chartData.datasets.map((d, i) => ({
+    label: d.label,
+    value: d.data[d.data.length - 1] || 0,
+    color: colors[i % colors.length]
+  }));
 
-  function criaPizza(id, dados) {
-    if (!dados || !dados.labels) return;
-    const ctxPie = document.getElementById(id).getContext('2d');
-    new Chart(ctxPie, {
-      type: 'doughnut',
-      data: {
-        labels: dados.labels,
-        datasets: [{ data: dados.data, backgroundColor: cores }]
-      },
-      options: {
-        plugins: {
-          legend: { position: 'bottom', labels: { color: '#f8fafc' } }
-        }
-      }
-    });
-  }
+  new Chart(ctxBar, {
+    type: 'bar',
+    data: {
+      labels: barras.map(b => b.label),
+      datasets: [{
+        label: 'Último valor',
+        data: barras.map(b => b.value),
+        backgroundColor: barras.map(b => b.color)
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false }, title: { display: true, text: 'Últimos valores por coluna', color: '#f8fafc' } },
+      scales: { x: { ticks: { color: '#cbd5e1' } }, y: { ticks: { color: '#cbd5e1' } } }
+    }
+  });
 
-  criaPizza('pieAlunos', pizzaData.alunos);
-  criaPizza('pieSatisfacao', pizzaData.satisfacao);
-  criaPizza('pieEmprego', pizzaData.empregabilidade);
+  // 🎯 Gráfico de pizza (médias por coluna)
+  const medias = chartData.datasets.map((d, i) => ({
+    label: d.label,
+    value: d.data.reduce((a, b) => a + b, 0) / d.data.length,
+    color: colors[i % colors.length]
+  }));
+
+  new Chart(ctxPie, {
+    type: 'pie',
+    data: {
+      labels: medias.map(m => m.label),
+      datasets: [{
+        label: 'Média',
+        data: medias.map(m => m.value),
+        backgroundColor: medias.map(m => m.color)
+      }]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Média por coluna', color: '#f8fafc' } }
+    }
+  });
 });
 </script>
 {% endblock %}
